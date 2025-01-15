@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/Bingo/static/css/main.93b22854.css",
+    "main.js": "/Bingo/static/js/main.7bf2b9ba.js",
+    "index.html": "/Bingo/index.html",
+    "main.93b22854.css.map": "/Bingo/static/css/main.93b22854.css.map",
+    "main.7bf2b9ba.js.map": "/Bingo/static/js/main.7bf2b9ba.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.93b22854.css",
+    "static/js/main.7bf2b9ba.js"
+  ]
+}
