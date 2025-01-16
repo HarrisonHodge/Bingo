@@ -1,4 +1,4 @@
-import "./App.css";
+import "./App.scss";
 import React, { useState, useEffect } from "react";
 
 function App() {
@@ -6,25 +6,53 @@ function App() {
   const [number, setNumber] = useState("");
   const [letter, setLetter] = useState("");
   const [calledNumbers, setCalledNumbers] = useState(new Set());
-  const [isGameOver, setIsGameOver] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [bingo, setBingo] = useState(false);
   const [message, setMessage] = useState("");
+  const [counter, setCounter] = useState(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  function handleBallAnimation() {
+    const ball = document.getElementById("ball");
+    if (ball) {
+      setIsAnimating(true);
+
+      ball.classList.add("animate");
+
+      ball.addEventListener(
+        "animationend",
+        () => {
+          ball.classList.remove("animate");
+          setIsAnimating(false);
+        },
+        { once: true }
+      );
+    }
+  }
 
   useEffect(() => {
     generateBingoCard();
     newCall();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function newCall() {
-    if (isGameOver) {
-      alert("All numbers have been called. The game is over.");
-      return;
-    }
+  useEffect(() => {
+    if (!bingoCard.length) return;
 
+    const cells = document.querySelectorAll(".bingo-cell");
+    cells.forEach((cell) => {
+      cell.classList.remove("marker");
+    });
+  }, [bingoCard]);
+
+  function newCall() {
+    if (gameOver) return;
+    setCounter((prev) => prev - 1);
     const newLetter = generateLetter();
     generateNumber(newLetter);
   }
 
   function generateLetter() {
+    if (gameOver) return;
     const characters = "BINGO";
     const randomIndex = Math.floor(Math.random() * characters.length);
     const result = characters.charAt(randomIndex);
@@ -34,6 +62,12 @@ function App() {
   }
 
   function generateNumber(letter) {
+    if (calledNumbers.size >= 50 || gameOver) {
+      setGameOver(true);
+      setMessage("Game Over");
+      return;
+    }
+
     let min, max;
     switch (letter) {
       case "B":
@@ -68,13 +102,23 @@ function App() {
     setCalledNumbers((prev) => new Set(prev).add(randomNum));
     setNumber(randomNum);
 
-    if (calledNumbers.size >= 74) {
-      setIsGameOver(true);
+    if (calledNumbers.size === 50) {
+      setGameOver(true);
       setMessage("Game Over");
+      return;
     }
+    console.log(calledNumbers.size);
   }
 
   function generateBingoCard() {
+    setCalledNumbers(new Set());
+    document.body.classList.remove("rolling-rainbow");
+    setGameOver(false);
+    setBingo(false);
+    setMessage("");
+    setCounter("51");
+    newCall();
+
     const generateColumn = (min, max, count) => {
       const numbers = new Set();
       while (numbers.size < count) {
@@ -109,17 +153,13 @@ function App() {
     cells.forEach((cell) => {
       cell.classList.remove("marker");
     });
-
-    setCalledNumbers(new Set());
-    document.body.classList.remove("rolling-rainbow");
-    setIsGameOver(false);
   }
 
   function checkNumber(cellId) {
-    const cell = document.getElementById(cellId);
-    const ball = number;
+    if (gameOver || number === "") return;
 
-    if (cell && Number(cell.textContent) === ball) {
+    const cell = document.getElementById(cellId);
+    if (cell && Number(cell.textContent) === number) {
       cell.classList.toggle("marker");
     }
 
@@ -141,6 +181,8 @@ function App() {
         document.getElementById(`cell-${row}-3`).classList.contains("marker") &&
         document.getElementById(`cell-${row}-4`).classList.contains("marker")
       ) {
+        setBingo(true);
+        setMessage("BINGO!");
         document.body.classList.add("rolling-rainbow");
         return;
       }
@@ -154,6 +196,8 @@ function App() {
         document.getElementById(`cell-3-${col}`).classList.contains("marker") &&
         document.getElementById(`cell-4-${col}`).classList.contains("marker")
       ) {
+        setBingo(true);
+        setMessage("BINGO!");
         document.body.classList.add("rolling-rainbow");
         return;
       }
@@ -166,6 +210,8 @@ function App() {
       document.getElementById("cell-3-3").classList.contains("marker") &&
       document.getElementById("cell-4-4").classList.contains("marker")
     ) {
+      setBingo(true);
+      setMessage("BINGO!");
       document.body.classList.add("rolling-rainbow");
       return;
     }
@@ -177,6 +223,8 @@ function App() {
       document.getElementById("cell-3-1").classList.contains("marker") &&
       document.getElementById("cell-4-0").classList.contains("marker")
     ) {
+      setBingo(true);
+      setMessage("BINGO!");
       document.body.classList.add("rolling-rainbow");
       return;
     }
@@ -185,24 +233,84 @@ function App() {
   return (
     <div className="app">
       <div className="cursor"></div>
-      <header className="header">
-        <div className="spinner-container">
-          <div className="spinner blue-bg">
-            {letter}{number}
+      <header
+        className="header"
+        id="header"
+        onClick={() => {
+          if (!gameOver && !isAnimating) {
+            handleBallAnimation();
+            newCall();
+          }
+        }}
+      >
+        <div className="ball-container">
+          <div tabIndex="0" id="ball" className="ball blue-bg">
+            {letter}
+            {number}
           </div>
         </div>
       </header>
 
-      <main>
-        <button onClick={() => newCall()}>
-          <span className="button-top"> Next Ball </span>
-        </button>
-        <button onClick={() => generateBingoCard()}>
-          <span className="button-top"> New Card </span>
-        </button>
+      <main className="game-over">
+        {gameOver && (
+          <div>
+            {message}
+            <button onClick={() => generateBingoCard()}>New Game?</button>
+          </div>
+        )}
+        {bingo && (
+          <div>
+            <div className="center">
+              <ul class="c-rainbow">
+                <li class="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--orange">
+                  BINGO!
+                </li>
+                <li class="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--violet">
+                  BINGO!
+                </li>
+                <li class="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--yellow">
+                  BINGO!
+                </li>
+              </ul>
+              <ul class="c-rainbow">
+                <li class="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--orange">
+                  BINGO!
+                </li>
+                <li class="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--violet">
+                  BINGO!
+                </li>
+                <li class="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--yellow">
+                  BINGO!
+                </li>
+              </ul>
+              <ul class="c-rainbow">
+                <li class="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--orange">
+                  BINGO!
+                </li>
+                <li class="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--violet">
+                  BINGO!
+                </li>
+                <li class="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li class="c-rainbow__layer c-rainbow__layer--yellow">
+                  BINGO!
+                </li>
+              </ul>
+            </div>
+            <button onClick={() => generateBingoCard()}>New Game?</button>
+          </div>
+        )}
       </main>
-
-      {message}
 
       <footer className="footer">
         <div className="card">
@@ -224,7 +332,7 @@ function App() {
                       className="bingo-cell"
                       id={cellId}
                       key={cellId}
-                      onClick={() => checkNumber(cellId) && !isGameOver}
+                      onClick={() => checkNumber(cellId) && !gameOver}
                     >
                       {cell}
                     </div>
@@ -235,6 +343,7 @@ function App() {
           </div>
         </div>
       </footer>
+      <p className="counter">balls left: {counter}</p>
     </div>
   );
 }
@@ -243,7 +352,9 @@ const positionElement = (e) => {
   const cursorSmall = document.querySelector(".cursor");
   const mouseY = e.clientY;
   const mouseX = e.clientX;
-  cursorSmall.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+  cursorSmall.style.transform = `translate3d(${mouseX - 25}px, ${
+    mouseY - 25
+  }px, 0)`;
 };
 
 window.addEventListener("mousemove", positionElement);
