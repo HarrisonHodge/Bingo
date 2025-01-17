@@ -11,10 +11,11 @@ function App() {
   const [message, setMessage] = useState("");
   const [counter, setCounter] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [pastBalls, setPastBalls] = useState([]);
 
   function handleBallAnimation() {
     const ball = document.getElementById("ball");
-    if (ball) {
+    if (ball && !bingo && !gameOver) {
       setIsAnimating(true);
 
       ball.classList.add("animate");
@@ -32,7 +33,6 @@ function App() {
 
   useEffect(() => {
     generateBingoCard();
-    newCall();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -46,6 +46,7 @@ function App() {
 
   function newCall() {
     if (gameOver) return;
+    if (bingo) return;
     setCounter((prev) => prev - 1);
     const newLetter = generateLetter();
     generateNumber(newLetter);
@@ -62,7 +63,7 @@ function App() {
   }
 
   function generateNumber(letter) {
-    if (calledNumbers.size >= 50 || gameOver) {
+    if (!bingo && (calledNumbers.size >= 50 || gameOver)) {
       setGameOver(true);
       setMessage("Game Over");
       return;
@@ -102,21 +103,26 @@ function App() {
     setCalledNumbers((prev) => new Set(prev).add(randomNum));
     setNumber(randomNum);
 
+    setPastBalls((prev) => {
+      const updated = [...prev, `${letter}${randomNum}`];
+      return updated.length >= 5 ? updated.slice(-5) : updated;
+    });
+
     if (calledNumbers.size === 50) {
       setGameOver(true);
       setMessage("Game Over");
       return;
     }
-    console.log(calledNumbers.size);
   }
 
   function generateBingoCard() {
-    setCalledNumbers(new Set());
     document.body.classList.remove("rolling-rainbow");
-    setGameOver(false);
-    setBingo(false);
     setMessage("");
     setCounter("51");
+    setCalledNumbers(new Set());
+    setPastBalls([]);
+    setGameOver(false);
+    setBingo(false);
     newCall();
 
     const generateColumn = (min, max, count) => {
@@ -159,8 +165,10 @@ function App() {
     if (gameOver || number === "") return;
 
     const cell = document.getElementById(cellId);
-    if (cell && Number(cell.textContent) === number) {
-      cell.classList.toggle("marker");
+    if (cell && (Number(cell.textContent) === number || calledNumbers.has(Number(cell.textContent)))) {
+      cell.classList.add("marker");
+      handleBallAnimation();
+      newCall();
     }
 
     const freeSpaceId = "cell-2-2";
@@ -237,13 +245,18 @@ function App() {
         className="header"
         id="header"
         onClick={() => {
-          if (!gameOver && !isAnimating) {
+          if (!gameOver && !bingo && !isAnimating) {
             handleBallAnimation();
             newCall();
           }
         }}
       >
         <div className="ball-container">
+          {pastBalls.slice(0, -1).map((ball, index) => (
+            <div tabIndex="0" key={index} className="dropped-ball blue-bg">
+              {ball}
+            </div>
+          ))}
           <div tabIndex="0" id="ball" className="ball blue-bg">
             {letter}
             {number}
@@ -261,48 +274,48 @@ function App() {
         {bingo && (
           <div>
             <div className="center">
-              <ul class="c-rainbow">
-                <li class="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--orange">
+              <ul className="c-rainbow">
+                <li className="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--orange">
                   BINGO!
                 </li>
-                <li class="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--violet">
+                <li className="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--violet">
                   BINGO!
                 </li>
-                <li class="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--yellow">
-                  BINGO!
-                </li>
-              </ul>
-              <ul class="c-rainbow">
-                <li class="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--orange">
-                  BINGO!
-                </li>
-                <li class="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--violet">
-                  BINGO!
-                </li>
-                <li class="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--yellow">
+                <li className="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--yellow">
                   BINGO!
                 </li>
               </ul>
-              <ul class="c-rainbow">
-                <li class="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--orange">
+              <ul className="c-rainbow">
+                <li className="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--orange">
                   BINGO!
                 </li>
-                <li class="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--violet">
+                <li className="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--violet">
                   BINGO!
                 </li>
-                <li class="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
-                <li class="c-rainbow__layer c-rainbow__layer--yellow">
+                <li className="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--yellow">
+                  BINGO!
+                </li>
+              </ul>
+              <ul className="c-rainbow">
+                <li className="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--orange">
+                  BINGO!
+                </li>
+                <li className="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--violet">
+                  BINGO!
+                </li>
+                <li className="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--yellow">
                   BINGO!
                 </li>
               </ul>

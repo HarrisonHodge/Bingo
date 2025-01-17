@@ -58,10 +58,11 @@ body {
   display: flex;
   justify-content: center;
   align-self: center;
-  transition: transform 0.1s ease;
+  transition: transform 0.5s ease;
 }
 
 .ball-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-content: center;
@@ -71,10 +72,25 @@ body {
   height: 80%;
   border-radius: 50px;
   width: 30%;
+  overflow: hidden;
 }
 
 .header:hover {
-  transform: translateY(10px);
+  transform: scale(1.05);
+}
+
+.dropped-ball {
+  position: relative;
+  align-content: center;
+  text-align: center;
+  align-self: center;
+  height: 100px;
+  width: 100px;
+  font-size: 48px;
+  background-color: var(--white);
+  border-radius: 50px;
+  color: var(--light-red);
+  margin: 5px;
 }
 
 .ball {
@@ -88,19 +104,11 @@ body {
   background-color: var(--white);
   border-radius: 50px;
   color: var(--light-red);
+  margin: 5px;
 }
 
 .ball.animate {
-  animation: bounce 1s ease;
-}
-
-.ball:focus {
-  -webkit-animation: bounce 1s ease-in-out backwards;
-          animation: bounce 1s ease-in-out backwards;
-}
-.ball:active {
-  -webkit-animation: none;
-          animation: none;
+  animation: bounce .75s ease;
 }
 
 @keyframes bounce {
@@ -111,28 +119,28 @@ body {
     transform: translateY(0px);
   }
   20% {
-    transform: translateY(-100px);
+    transform: translateY(-50px);
   }
   30% {
     transform: translateY(0px);
   }
   40% {
-    transform: translateY(-50px);
+    transform: translateY(-20px);
   }
   50% {
     transform: translateY(0px);
   }
   60% {
-    transform: translateY(-25px);
+    transform: translateY(-10px);
   }
   70% {
     transform: translateY(0px);
   }
   80% {
-    transform: translateY(-10px);
+    transform: translateY(-5px);
   }
   90% {
-    transform: translateY(-5px);
+    transform: translateY(-0px);
   }
   100% {
     transform: translateY(0px);
@@ -355,7 +363,7 @@ $root: '.c-rainbow';
   84% {
     background-color: var(--color-violet);
   }
-  98% {
+  100% {
     background-color: var(--color-red);
   }
 }
@@ -364,7 +372,7 @@ $root: '.c-rainbow';
   animation: rolling-rainbow 5s linear infinite;
 }
 
-@media only screen and (max-width: 1439px) {
+@media only screen and (max-width: 1440px) {
 
   html, body, .app {
     height: 100vh;
@@ -374,7 +382,7 @@ $root: '.c-rainbow';
   }
 
   .header {
-    width: 100%;
+    width: 50%;
   }
 
   .header:hover {
@@ -386,6 +394,18 @@ $root: '.c-rainbow';
     height: 100%;
   }
 
+  .ball{
+    width: 50px;
+    height: 50px;
+    font-size: 25px;
+  }
+
+  .dropped-ball{
+    width: 50px;
+    height: 50px;
+    font-size: 25px;
+  }
+
   @keyframes bounce {
     0% {
       margin-top: 0px;
@@ -393,7 +413,7 @@ $root: '.c-rainbow';
   }
 
   .card {
-    width: 40%;
+    width: 400px;
   }
 
   .bingo-card {
@@ -415,7 +435,6 @@ $root: '.c-rainbow';
     font-size: 30px;
     padding: 0;
   }
-
 }
 
 @media only screen and (max-width: 700px) {
