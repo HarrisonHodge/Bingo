@@ -15,7 +15,7 @@ function App() {
 
   function handleBallAnimation() {
     const ball = document.getElementById("ball");
-    if (ball && !bingo && !gameOver) {
+    if (ball && !bingo && (calledNumbers.size < 50)) {
       setIsAnimating(true);
 
       ball.classList.add("animate");
@@ -45,15 +45,18 @@ function App() {
   }, [bingoCard]);
 
   function newCall() {
-    if (gameOver) return;
-    if (bingo) return;
-    setCounter((prev) => prev - 1);
-    const newLetter = generateLetter();
-    generateNumber(newLetter);
+    if (calledNumbers.size < 50 || !bingo) {
+      setCounter((prev) => prev - 1);
+      const newLetter = generateLetter();
+      generateNumber(newLetter);
+    } else {
+      setGameOver(true);
+      setMessage("Game Over");
+      return;
+    };
   }
 
   function generateLetter() {
-    if (gameOver) return;
     const characters = "BINGO";
     const randomIndex = Math.floor(Math.random() * characters.length);
     const result = characters.charAt(randomIndex);
@@ -63,12 +66,6 @@ function App() {
   }
 
   function generateNumber(letter) {
-    if (!bingo && (calledNumbers.size >= 50 || gameOver)) {
-      setGameOver(true);
-      setMessage("Game Over");
-      return;
-    }
-
     let min, max;
     switch (letter) {
       case "B":
@@ -107,20 +104,16 @@ function App() {
       const updated = [...prev, `${letter}${randomNum}`];
       return updated.length >= 5 ? updated.slice(-5) : updated;
     });
-
-    if (calledNumbers.size === 50) {
-      setGameOver(true);
-      setMessage("Game Over");
-      return;
-    }
   }
 
   function generateBingoCard() {
     document.body.classList.remove("rolling-rainbow");
-    setMessage("");
-    setCounter("51");
+    setCounter("50");
     setCalledNumbers(new Set());
     setPastBalls([]);
+    setLetter("");
+    setNumber("");
+    setMessage("");
     setGameOver(false);
     setBingo(false);
     newCall();
@@ -162,13 +155,25 @@ function App() {
   }
 
   function checkNumber(cellId) {
+    console.log(counter)
+    console.log(calledNumbers)
+    console.log(pastBalls)
+    console.log(letter)
+    console.log(number)
+    console.log(message)
+    console.log(gameOver)
+    console.log(bingo)
+    
     if (gameOver || number === "") return;
 
     const cell = document.getElementById(cellId);
     if (cell && (Number(cell.textContent) === number || calledNumbers.has(Number(cell.textContent)))) {
       cell.classList.add("marker");
-      handleBallAnimation();
-      newCall();
+      checkBingo();
+      if (bingo !== true) {
+        handleBallAnimation();
+        newCall();
+      }
     }
 
     const freeSpaceId = "cell-2-2";
@@ -177,7 +182,6 @@ function App() {
       X.classList.add("marker");
     }
 
-    checkBingo();
   }
 
   function checkBingo() {
@@ -265,13 +269,13 @@ function App() {
       </header>
 
       <main className="game-over">
-        {gameOver && (
+        {gameOver && !bingo && (
           <div>
             {message}
             <button onClick={() => generateBingoCard()}>New Game?</button>
           </div>
         )}
-        {bingo && (
+        {bingo && !gameOver && (
           <div>
             <div className="center">
               <ul className="c-rainbow">
