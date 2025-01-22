@@ -2,36 +2,19 @@ import "./App.scss";
 import React, { useState, useEffect } from "react";
 
 function App() {
+  const [counter, setCounter] = useState(null);
   const [bingoCard, setBingoCard] = useState([]);
+  const [pastBalls, setPastBalls] = useState([]);
   const [number, setNumber] = useState("");
   const [letter, setLetter] = useState("");
+  const [message, setMessage] = useState("");
   const [calledNumbers, setCalledNumbers] = useState(new Set());
+  const [isAnimating, setIsAnimating] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [bingo, setBingo] = useState(false);
-  const [message, setMessage] = useState("");
-  const [counter, setCounter] = useState(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [pastBalls, setPastBalls] = useState([]);
-
-  function handleBallAnimation() {
-    const ball = document.getElementById("ball");
-    if (ball && !bingo && (calledNumbers.size < 50)) {
-      setIsAnimating(true);
-
-      ball.classList.add("animate");
-
-      ball.addEventListener(
-        "animationend",
-        () => {
-          ball.classList.remove("animate");
-          setIsAnimating(false);
-        },
-        { once: true }
-      );
-    }
-  }
 
   useEffect(() => {
+    clear();
     generateBingoCard();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -44,28 +27,52 @@ function App() {
     });
   }, [bingoCard]);
 
-  function newCall() {
-    if (calledNumbers.size < 50 || !bingo) {
-      setCounter((prev) => prev - 1);
-      const newLetter = generateLetter();
-      generateNumber(newLetter);
-    } else {
-      setGameOver(true);
-      setMessage("Game Over");
-      return;
-    };
-  }
+  const handleBallAnimation = () => {
+    const ball = document.getElementById("ball");
+    setIsAnimating(true);
 
-  function generateLetter() {
+    ball.classList.add("animate");
+
+    ball.addEventListener(
+      "animationend",
+      () => {
+        ball.classList.remove("animate");
+        setIsAnimating(false);
+      },
+      { once: true }
+    );
+  };
+
+  const newCall = () => {
+    setCounter((prev) => prev - 1);
+    const newLetter = generateLetter();
+    generateNumber(newLetter);
+  };
+
+  const clear = () => {
+    document.body.classList.remove("rolling-rainbow");
+    setCounter(50);
+    setCalledNumbers(new Set());
+    setPastBalls([]);
+    setLetter("");
+    setNumber("");
+    setMessage("");
+    setGameOver(false);
+    setBingo(false);
+    generateBingoCard();
+    newCall();
+  };
+
+  const generateLetter = () => {
     const characters = "BINGO";
     const randomIndex = Math.floor(Math.random() * characters.length);
     const result = characters.charAt(randomIndex);
 
     setLetter(result);
     return result;
-  }
+  };
 
-  function generateNumber(letter) {
+  const generateNumber = (letter) => {
     let min, max;
     switch (letter) {
       case "B":
@@ -104,20 +111,9 @@ function App() {
       const updated = [...prev, `${letter}${randomNum}`];
       return updated.length >= 5 ? updated.slice(-5) : updated;
     });
-  }
+  };
 
-  function generateBingoCard() {
-    document.body.classList.remove("rolling-rainbow");
-    setCounter("50");
-    setCalledNumbers(new Set());
-    setPastBalls([]);
-    setLetter("");
-    setNumber("");
-    setMessage("");
-    setGameOver(false);
-    setBingo(false);
-    newCall();
-
+  const generateBingoCard = () => {
     const generateColumn = (min, max, count) => {
       const numbers = new Set();
       while (numbers.size < count) {
@@ -147,32 +143,43 @@ function App() {
     }
 
     setBingoCard(newBingoCard);
-
     const cells = document.querySelectorAll(".bingo-cell");
     cells.forEach((cell) => {
       cell.classList.remove("marker");
     });
-  }
+  };
 
-  function checkNumber(cellId) {
-    console.log(counter)
-    console.log(calledNumbers)
-    console.log(pastBalls)
-    console.log(letter)
-    console.log(number)
-    console.log(message)
-    console.log(gameOver)
-    console.log(bingo)
-    
+  const checkGameOver = () => {
+    if (counter < 0) {
+      setMessage('game over')
+      setGameOver(true)
+    } 
+    else if (calledNumbers.size > 49 ) {
+      setMessage('game over')
+      setGameOver(true)
+    } 
+    else {
+      setMessage('')
+      setGameOver(false)
+      handleBallAnimation();
+      newCall();
+    }
+  };
+
+  const checkNumber = (cellId) => {
     if (gameOver || number === "") return;
 
     const cell = document.getElementById(cellId);
-    if (cell && (Number(cell.textContent) === number || calledNumbers.has(Number(cell.textContent)))) {
+    if (
+      cell &&
+      (Number(cell.textContent) === number ||
+        calledNumbers.has(Number(cell.textContent)))
+    ) {
       cell.classList.add("marker");
       checkBingo();
-      if (bingo !== true) {
+      if (!bingo || !gameOver) {
         handleBallAnimation();
-        newCall();
+        checkGameOver();
       }
     }
 
@@ -181,10 +188,9 @@ function App() {
     if (X && X.textContent === "X") {
       X.classList.add("marker");
     }
+  };
 
-  }
-
-  function checkBingo() {
+  const checkBingo = () => {
     for (let row = 0; row < 5; row++) {
       if (
         document.getElementById(`cell-${row}-0`).classList.contains("marker") &&
@@ -240,7 +246,7 @@ function App() {
       document.body.classList.add("rolling-rainbow");
       return;
     }
-  }
+  };
 
   return (
     <div className="app">
@@ -249,9 +255,8 @@ function App() {
         className="header"
         id="header"
         onClick={() => {
-          if (!gameOver && !bingo && !isAnimating) {
-            handleBallAnimation();
-            newCall();
+          if ((!gameOver || !bingo) && !isAnimating) {
+            checkGameOver();
           }
         }}
       >
@@ -269,62 +274,86 @@ function App() {
       </header>
 
       <main className="game-over">
-        {gameOver && !bingo && (
+        {gameOver &&(
           <div>
             {message}
-            <button onClick={() => generateBingoCard()}>New Game?</button>
+            <button onClick={() => clear()}>New Game?</button>
           </div>
         )}
-        {bingo && !gameOver && (
+        {bingo && (
           <div>
             <div className="center">
               <ul className="c-rainbow">
-                <li className="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--white">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--orange">
                   BINGO!
                 </li>
-                <li className="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--red">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--violet">
                   BINGO!
                 </li>
-                <li className="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
-                <li className="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--blue">
+                  BINGO!
+                </li>
+                <li className="c-rainbow__layer c-rainbow__layer--green">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--yellow">
                   BINGO!
                 </li>
               </ul>
               <ul className="c-rainbow">
-                <li className="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--white">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--orange">
                   BINGO!
                 </li>
-                <li className="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--red">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--violet">
                   BINGO!
                 </li>
-                <li className="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
-                <li className="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--blue">
+                  BINGO!
+                </li>
+                <li className="c-rainbow__layer c-rainbow__layer--green">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--yellow">
                   BINGO!
                 </li>
               </ul>
               <ul className="c-rainbow">
-                <li className="c-rainbow__layer c-rainbow__layer--white">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--white">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--orange">
                   BINGO!
                 </li>
-                <li className="c-rainbow__layer c-rainbow__layer--red">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--red">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--violet">
                   BINGO!
                 </li>
-                <li className="c-rainbow__layer c-rainbow__layer--blue">BINGO!</li>
-                <li className="c-rainbow__layer c-rainbow__layer--green">BINGO!</li>
+                <li className="c-rainbow__layer c-rainbow__layer--blue">
+                  BINGO!
+                </li>
+                <li className="c-rainbow__layer c-rainbow__layer--green">
+                  BINGO!
+                </li>
                 <li className="c-rainbow__layer c-rainbow__layer--yellow">
                   BINGO!
                 </li>
               </ul>
             </div>
-            <button onClick={() => generateBingoCard()}>New Game?</button>
+            <button onClick={() => clear()}>New Game?</button>
           </div>
         )}
       </main>
