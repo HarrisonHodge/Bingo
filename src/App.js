@@ -154,15 +154,17 @@ function App() {
       setMessage('game over')
       setGameOver(true)
     } 
-    else if (calledNumbers.size > 49 ) {
+    else if (calledNumbers.size > 49) {
       setMessage('game over')
       setGameOver(true)
     } 
     else {
       setMessage('')
       setGameOver(false)
-      handleBallAnimation();
-      newCall();
+      if (!bingo) {
+        handleBallAnimation();
+        newCall();
+      }
     }
   };
 
